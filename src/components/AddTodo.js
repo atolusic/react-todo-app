@@ -1,61 +1,94 @@
 import React, { Component } from "react";
 import Modal from "react-responsive-modal";
 
-class AddTodo extends Component {
-  state = {
-    taskName: "",
-    desc: "",
-    id: ""
-  };
+import { Consumer } from "../context/context";
+import moment from "moment";
+import database from "../firebase/firebase";
 
-  onInputChange = e => {
-    this.setState({
-      [e.target.name]: e.target.value
-    });
+class AddTodo extends Component {
+  constructor(props) {
+    super(props);
+
+    this.taskNameInput = React.createRef();
+    this.descriptionInput = React.createRef();
+  }
+  addTodo = (e, dispatch, id) => {
+    e.preventDefault();
+
+    const saveData = {
+      taskName: this.taskNameInput.current.value,
+      desc: this.descriptionInput.current.value,
+      createdAt: moment().format("MMMM Do YYYY, h:mma")
+    };
+
+    if (id) {
+      saveData.id = id;
+      database
+        .ref(`todos/${id}`)
+        .update(saveData)
+        .then(() => dispatch({ type: "EDIT_TODO", payload: saveData }));
+    } else {
+      database
+        .ref(`todos`)
+        .push(saveData)
+        .then(ref => {
+          dispatch({ type: "ADD_TODO", payload: { id: ref.key, ...saveData } });
+        });
+    }
   };
 
   render() {
-    const { addTodo, onClose, open } = this.props;
-    const { taskName, desc, id } = this.state;
     return (
-      <Modal open={open} onClose={onClose} center>
-        <div className="p-5 text-center w-100">
-          <h3 className="mb-3">{id ? "Edit Todo" : "New Todo"}</h3>
-          <form onSubmit={e => addTodo(e, this.state, onClose)}>
-            <div className="input-group mb-3">
-              <div className="input-group-prepend">
-                <span className="input-group-text" id="basic-addon1">
-                  Task name
-                </span>
+      <Consumer>
+        {value => {
+          const { dispatch, modalOpen, edit } = value;
+          let isEdit = edit ? { ...edit } : null;
+          return (
+            <Modal
+              open={modalOpen}
+              onClose={() => dispatch({ type: "HIDE_MODAL" })}
+              center
+            >
+              <div className="p-5 text-center w-100">
+                <h3 className="mb-3">{edit ? "Edit Todo" : "New Todo"}</h3>
+                <form onSubmit={e => this.addTodo(e, dispatch, isEdit)}>
+                  <div className="input-group mb-3">
+                    <div className="input-group-prepend">
+                      <span className="input-group-text" id="basic-addon1">
+                        Task name
+                      </span>
+                    </div>
+                    <input
+                      defaultValue={edit && edit.taskName}
+                      name="taskName"
+                      type="text"
+                      className="form-control"
+                      aria-describedby="basic-addon1"
+                      required
+                      ref={this.taskNameInput}
+                    />
+                  </div>
+                  <div className="input-group input-group-md mb-3">
+                    <div className="input-group-prepend">
+                      <span className="input-group-text">Description</span>
+                    </div>
+                    <textarea
+                      defaultValue={edit && edit.desc}
+                      name="desc"
+                      className="form-control"
+                      aria-label="With textarea"
+                      ref={this.descriptionInput}
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-secondary">
+                    {edit ? "Edit" : "Add"}
+                  </button>
+                </form>
               </div>
-              <input
-                value={taskName}
-                name="taskName"
-                onChange={e => this.onInputChange(e)}
-                type="text"
-                className="form-control"
-                aria-describedby="basic-addon1"
-                required
-              />
-            </div>
-            <div className="input-group input-group-md mb-3">
-              <div className="input-group-prepend">
-                <span className="input-group-text">Description</span>
-              </div>
-              <textarea
-                value={desc}
-                name="desc"
-                onChange={e => this.onInputChange(e)}
-                className="form-control"
-                aria-label="With textarea"
-              />
-            </div>
-            <button type="submit" className="btn btn-secondary">
-              {id ? "Edit" : "Add"}
-            </button>
-          </form>
-        </div>
-      </Modal>
+            </Modal>
+          );
+        }}
+      </Consumer>
     );
   }
 }
