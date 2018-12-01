@@ -1,14 +1,19 @@
 import React, { Component } from "react";
 import Spinner from "./Spinner";
+import { TinyPagination } from "react-pagination-custom";
 
 import database from "../firebase/firebase";
 import Todos from "./Todos";
+import Todo from "./Todo";
 import { Consumer } from "../context/context";
+import Thead from "./Thead";
 
 class MainPage extends Component {
   state = {
-    deleteTodoIds: []
+    deleteTodoIds: [],
+    selectedPageId: 1
   };
+
   deleteTodoHandler = (e, todos, dispatch) => {
     const { deleteTodoIds } = this.state;
     const updates = {};
@@ -20,7 +25,9 @@ class MainPage extends Component {
     database
       .ref(`todos`)
       .update(updates)
-      .then(() => dispatch({ type: "DELETE_TODO", payload: deleteTodoIds }));
+      .then(() => {
+        dispatch({ type: "DELETE_TODO", payload: deleteTodoIds });
+      });
   };
 
   checkDelete = id => {
@@ -38,39 +45,78 @@ class MainPage extends Component {
     });
   };
 
+  /*********************** PAGINATION ***********************/
+
+  changePage = id => {
+    this.setState((prevState, props) => {
+      return {
+        ...prevState,
+        selectedPageId: id
+      };
+    });
+  };
+
+  buttonPageClick = id => {
+    let { selectedPageId } = this.state;
+    switch (id) {
+      case "PRE":
+        this.changePage(selectedPageId - 1);
+        break;
+      case "NEXT":
+        this.changePage(selectedPageId + 1);
+        break;
+      default:
+        this.changePage(id);
+        break;
+    }
+  };
+
+  renderBtnNumber = id => {
+    return (
+      <button
+        onClick={this.buttonPageClick.bind(this, id)}
+        key={id}
+        className="mt-1 btn btn-sm btn-dark"
+      >
+        {id}
+      </button>
+    );
+  };
+
   render() {
+    const itemPerPage = 5;
+    const maxBtnNumbers = 3;
     let todoList = <Spinner />;
-    const { deleteTodoIds } = this.state;
+    const { deleteTodoIds, selectedPageId } = this.state;
     return (
       <Consumer>
         {value => {
           const { todos, dispatch } = value;
+          let listShow = [...todos];
+          listShow = listShow.splice(
+            (selectedPageId - 1) * itemPerPage,
+            itemPerPage
+          );
           if (todos.length >= 1) {
             todoList = (
-              <div>
-                <table className="table table-hover table-bordered">
-                  <thead>
-                    <tr className="table-active">
-                      <th scope="col">ID</th>
-                      <th scope="col">Task name</th>
-                      <th scope="col">Created at</th>
-                      <th scope="col">
-                        <button
-                          onClick={e =>
-                            this.deleteTodoHandler(e, todos, dispatch)
-                          }
-                          disabled={deleteTodoIds.length < 1}
-                          className="btn btn-sm btn-outline-dark"
-                        >
-                          <i className="fas fa-trash" />
-                        </button>
-                      </th>
-                      <th scope="col">Actions</th>
-                    </tr>
-                  </thead>
-                  <Todos checkDelete={this.checkDelete} todos={todos} />
-                </table>
-              </div>
+              <table className="table table-hover table-bordered">
+                <Thead
+                  dispatch={dispatch}
+                  deleteTodoIds={deleteTodoIds}
+                  todos={todos}
+                  deleteTodoHandler={this.deleteTodoHandler}
+                />
+                <Todos>
+                  {listShow.map(todo => (
+                    <Todo
+                      key={todo.id}
+                      dispatch={dispatch}
+                      todo={todo}
+                      checkDelete={this.checkDelete}
+                    />
+                  ))}
+                </Todos>
+              </table>
             );
           }
 
@@ -78,6 +124,21 @@ class MainPage extends Component {
             <div className="container">
               <h1 className="mb-5">React TodoApp</h1>
               {todoList}
+              <TinyPagination
+                total={todos.length}
+                selectedPageId={selectedPageId}
+                itemPerPage={itemPerPage}
+                renderBtnNumber={this.renderBtnNumber}
+                maxBtnNumbers={maxBtnNumbers}
+                preKey="PRE"
+                nextKey="NEXT"
+                wrapClass="page-container"
+                btnsClass="btns-container"
+                counterClass="counter-container"
+                counterStyle={{ color: "gray" }}
+                spreadClass="spread-container"
+                spreadStyle={{ padding: "0 5px" }}
+              />
               <button
                 onClick={() =>
                   dispatch({
@@ -86,7 +147,7 @@ class MainPage extends Component {
                   })
                 }
                 type="button"
-                className="mt-3 btn btn-lg btn-dark"
+                className="mt-1 btn btn-lg btn-dark"
               >
                 Add Todo
               </button>

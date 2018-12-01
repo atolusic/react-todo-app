@@ -36,6 +36,7 @@ const reducer = (state, action) => {
       };
     }
     case "EDIT_TODO": {
+      console.log(state);
       return {
         ...state,
         todos: state.todos.map(todo =>

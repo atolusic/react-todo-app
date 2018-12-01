@@ -19,3 +19,11 @@
   height: 100vh;
   padding: 5rem;
 }
+.clearfix {
+  overflow: auto;
+}
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}

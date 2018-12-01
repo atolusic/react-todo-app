@@ -8,11 +8,11 @@ import database from "../firebase/firebase";
 class AddTodo extends Component {
   constructor(props) {
     super(props);
-
     this.taskNameInput = React.createRef();
     this.descriptionInput = React.createRef();
   }
-  addTodo = (e, dispatch, id) => {
+
+  addTodo = (e, dispatch, isEdit) => {
     e.preventDefault();
 
     const saveData = {
@@ -21,12 +21,15 @@ class AddTodo extends Component {
       createdAt: moment().format("MMMM Do YYYY, h:mma")
     };
 
-    if (id) {
-      saveData.id = id;
+    if (isEdit) {
       database
-        .ref(`todos/${id}`)
+        .ref(`todos/${isEdit.id}`)
         .update(saveData)
-        .then(() => dispatch({ type: "EDIT_TODO", payload: saveData }));
+        .then(() => {
+          saveData.id = isEdit.id;
+          dispatch({ type: "EDIT_TODO", payload: saveData });
+        })
+        .catch(e => console.log(e));
     } else {
       database
         .ref(`todos`)
