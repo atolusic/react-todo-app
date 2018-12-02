@@ -1,13 +1,12 @@
 import React, { Component } from "react";
 import database from "../firebase/firebase";
+import { Link } from "react-router-dom";
 
 import Spinner from "./Spinner";
-import { Consumer } from "../context/context";
+import { Consumer, Context } from "../context/context";
 
 class TodoDetails extends Component {
-  state = {
-    todo: null
-  };
+  static contextType = Context;
   componentDidMount() {
     const {
       match: {
@@ -15,28 +14,30 @@ class TodoDetails extends Component {
       }
     } = this.props;
 
+    const { dispatch, todos } = this.context;
     if (id) {
-      database
-        .ref(`todos/${id}`)
-        .once("value")
-        .then(snapshot => {
-          const todo = snapshot.val();
-          if (todo) {
-            this.setState({
-              todo: {
-                ...todo,
-                id
-              }
-            });
-          }
-        })
-        .catch(e => console.log(e));
+      const todo = todos.find(todo => todo.id === id);
+      if (!todo) {
+        database
+          .ref(`todos/${id}`)
+          .once("value")
+          .then(snapshot => {
+            const todo = snapshot.val();
+            if (todo) {
+              dispatch({ type: "GET_TODO", payload: { id, ...todo } });
+            }
+          })
+          .catch(e => console.log(e));
+      }
     }
   }
 
   render() {
-    const { todo } = this.state;
-    let todoItem = <Spinner />;
+    const {
+      match: {
+        params: { id }
+      }
+    } = this.props;
     const flexStyles = {
       container: {
         display: "flex",
@@ -44,41 +45,51 @@ class TodoDetails extends Component {
         alignItems: "center"
       }
     };
-    if (todo) {
-      todoItem = (
+    return (
+      <div className="jumbotron jumbotron-fluid">
         <Consumer>
           {value => {
             const { dispatch, todos } = value;
-            console.log(todos);
-            // return (
-            //   <div className="container text-left" style={flexStyles.container}>
-            //     <div>
-            //       <h1 className="display-5">{todo.taskName}</h1>
-            //       <p className="font-italic">Created at: {todo.createdAt}</p>
-            //       <p className="lead">{todo.desc}</p>
-            //     </div>
-            //     <div>
-            //       <button className="btn btn-secondary">Delete</button>
-            //       <button
-            //         onClick={() =>
-            //           dispatch({
-            //             type: "SHOW_MODAL",
-            //             modalType: "EDIT_TODO",
-            //             payload: todo
-            //           })
-            //         }
-            //         className="btn ml-1 btn-secondary"
-            //       >
-            //         Edit
-            //       </button>
-            //     </div>
-            //   </div>
-            // );
+            let renderTodo = <Spinner />;
+            if (todos.length >= 1) {
+              const todo = todos.find(todo => todo.id === id);
+              renderTodo = (
+                <div
+                  className="container text-left"
+                  style={flexStyles.container}
+                >
+                  <div>
+                    <Link to="/" className="btn btn-sm btn-secondary mb-3">
+                      Back to dashboard
+                    </Link>
+                    <h1 className="display-5">{todo.taskName}</h1>
+                    <p className="font-italic">Created at: {todo.createdAt}</p>
+                    <p className="lead">{todo.desc}</p>
+                  </div>
+                  <div>
+                    <button className="btn btn-secondary">Delete</button>
+                    <button
+                      onClick={() =>
+                        dispatch({
+                          type: "SHOW_MODAL",
+                          modalType: "EDIT_TODO",
+                          payload: todo,
+                          editTodoDetailsPage: true
+                        })
+                      }
+                      className="btn ml-1 btn-secondary"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              );
+            }
+            return renderTodo;
           }}
         </Consumer>
-      );
-    }
-    return <div className="jumbotron jumbotron-fluid">{todoItem}</div>;
+      </div>
+    );
   }
 }
 

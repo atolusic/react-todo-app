@@ -2,10 +2,12 @@ import React from "react";
 import { Consumer } from "../../context/context";
 
 import AddTodo from "../AddTodo";
+import DeletePopup from "../DeletePopup";
 
 const MODAL_COMPONENTS = {
   ADD_TODO: AddTodo,
-  EDIT_TODO: AddTodo
+  EDIT_TODO: AddTodo,
+  DELETE_POPUP: DeletePopup
 };
 
 const ModalContainer = () => {

@@ -5,14 +5,36 @@ import { TinyPagination } from "react-pagination-custom";
 import database from "../firebase/firebase";
 import Todos from "./Todos";
 import Todo from "./Todo";
-import { Consumer } from "../context/context";
+import { Consumer, Context } from "../context/context";
 import Thead from "./Thead";
 
 class MainPage extends Component {
+  static contextType = Context;
   state = {
     deleteTodoIds: [],
     selectedPageId: 1
   };
+
+  componentDidMount() {
+    const { dispatch } = this.context;
+    database
+      .ref("todos")
+      .once("value")
+      .then(snapshot => {
+        const todos = snapshot.val();
+        if (todos) {
+          const todoList = [];
+          for (const key in todos) {
+            todoList.push({
+              id: key,
+              ...todos[key]
+            });
+          }
+          dispatch({ type: "GET_TODOS", payload: todoList });
+        }
+      })
+      .catch(e => console.log(e));
+  }
 
   deleteTodoHandler = (e, todos, dispatch) => {
     const { deleteTodoIds } = this.state;

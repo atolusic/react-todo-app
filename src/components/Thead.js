@@ -1,12 +1,6 @@
 import React from "react";
 
-const Thead = ({
-  dispatch,
-  todos,
-  deleteTodoIds,
-  deleteTodoHandler,
-  listShow
-}) => (
+const Thead = ({ dispatch, todos, deleteTodoIds, deleteTodoHandler }) => (
   <thead>
     <tr className="table-active">
       <th scope="col">ID</th>

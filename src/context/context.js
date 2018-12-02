@@ -1,7 +1,6 @@
 import React, { Component } from "react";
-import database from "../firebase/firebase";
 
-const Context = React.createContext();
+export const Context = React.createContext();
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -18,6 +17,17 @@ const reducer = (state, action) => {
         modalType: null,
         modalOpen: false
       };
+    case "GET_TODOS":
+      return {
+        ...state,
+        todos: action.payload
+      };
+    case "GET_TODO": {
+      return {
+        ...state,
+        todos: [action.payload]
+      };
+    }
     case "ADD_TODO": {
       return {
         ...state,
@@ -36,7 +46,6 @@ const reducer = (state, action) => {
       };
     }
     case "EDIT_TODO": {
-      console.log(state);
       return {
         ...state,
         todos: state.todos.map(todo =>
@@ -60,26 +69,6 @@ export class Provider extends Component {
     modalType: null,
     modalOpen: false
   };
-
-  componentDidMount() {
-    database
-      .ref("todos")
-      .once("value")
-      .then(snapshot => {
-        const todos = snapshot.val();
-        if (todos) {
-          const todoList = [];
-          for (const key in todos) {
-            todoList.push({
-              id: key,
-              ...todos[key]
-            });
-          }
-          this.setState({ todos: todoList });
-        }
-      })
-      .catch(e => console.log(e));
-  }
 
   render() {
     return (
