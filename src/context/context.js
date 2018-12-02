@@ -9,7 +9,8 @@ const reducer = (state, action) => {
         ...state,
         modalType: action.modalType,
         modalOpen: true,
-        edit: action.payload
+        edit: action.payload,
+        deleteTodoDetails: action.deleteTodoDetails
       };
     case "HIDE_MODAL":
       return {
@@ -42,7 +43,8 @@ const reducer = (state, action) => {
       );
       return {
         ...state,
-        todos
+        todos,
+        modalOpen: false
       };
     }
     case "EDIT_TODO": {

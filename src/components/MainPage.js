@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import Spinner from "./Spinner";
 import { TinyPagination } from "react-pagination-custom";
+import Dropdown from "react-dropdown";
+import "react-dropdown/style.css";
 
 import database from "../firebase/firebase";
 import Todos from "./Todos";
@@ -12,7 +14,9 @@ class MainPage extends Component {
   static contextType = Context;
   state = {
     deleteTodoIds: [],
-    selectedPageId: 1
+    selectedPageId: 1,
+    dropdownValue: "Task name",
+    searchFieldValue: ""
   };
 
   componentDidMount() {
@@ -36,22 +40,6 @@ class MainPage extends Component {
       .catch(e => console.log(e));
   }
 
-  deleteTodoHandler = (e, todos, dispatch) => {
-    const { deleteTodoIds } = this.state;
-    const updates = {};
-    todos.forEach(todo => {
-      if (deleteTodoIds.includes(todo.id)) {
-        updates[todo.id] = null;
-      }
-    });
-    database
-      .ref(`todos`)
-      .update(updates)
-      .then(() => {
-        dispatch({ type: "DELETE_TODO", payload: deleteTodoIds });
-      });
-  };
-
   checkDelete = id => {
     const { deleteTodoIds } = this.state;
     let todos = [...deleteTodoIds];
@@ -65,6 +53,14 @@ class MainPage extends Component {
     this.setState({
       deleteTodoIds: todos
     });
+  };
+
+  handleSearch = (todo, dpVal) => {
+    const { searchFieldValue } = this.state;
+
+    return todo[dpVal].toLowerCase().includes(searchFieldValue.toLowerCase())
+      ? todo
+      : null;
   };
 
   /*********************** PAGINATION ***********************/
@@ -109,12 +105,35 @@ class MainPage extends Component {
     const itemPerPage = 5;
     const maxBtnNumbers = 3;
     let todoList = <Spinner />;
-    const { deleteTodoIds, selectedPageId } = this.state;
+    const {
+      deleteTodoIds,
+      selectedPageId,
+      dropdownValue,
+      searchFieldValue
+    } = this.state;
+    const dropdownOptions = ["ID", "Task Name", "Description", "Created at"];
     return (
       <Consumer>
         {value => {
           const { todos, dispatch } = value;
-          let listShow = [...todos];
+          let listShow = [...todos].filter(todo => {
+            if (searchFieldValue.length > 2) {
+              switch (dropdownValue) {
+                case "ID":
+                  return this.handleSearch(todo, "id");
+                case "Task name":
+                  return this.handleSearch(todo, "taskName");
+                case "Description":
+                  return this.handleSearch(todo, "desc");
+                case "Created at":
+                  return this.handleSearch(todo, "createdAt");
+
+                default:
+                  return todo;
+              }
+            }
+            return todo;
+          });
           listShow = listShow.splice(
             (selectedPageId - 1) * itemPerPage,
             itemPerPage
@@ -122,12 +141,7 @@ class MainPage extends Component {
           if (todos.length >= 1) {
             todoList = (
               <table className="table table-hover table-bordered">
-                <Thead
-                  dispatch={dispatch}
-                  deleteTodoIds={deleteTodoIds}
-                  todos={todos}
-                  deleteTodoHandler={this.deleteTodoHandler}
-                />
+                <Thead dispatch={dispatch} deleteTodoIds={deleteTodoIds} />
                 <Todos>
                   {listShow.map(todo => (
                     <Todo
@@ -145,6 +159,29 @@ class MainPage extends Component {
           return (
             <div className="container">
               <h1 className="mb-5">React TodoApp</h1>
+              <div className="input-group mb-3">
+                <div className="input-group-prepend">
+                  <Dropdown
+                    onChange={selected => {
+                      this.setState({ dropdownValue: selected.value });
+                    }}
+                    controlClassName="dp"
+                    options={dropdownOptions}
+                    value={dropdownValue}
+                  />
+                </div>
+                <input
+                  style={{ height: "2.5rem" }}
+                  type="text"
+                  className="form-control"
+                  placeholder={dropdownValue}
+                  aria-label="Username"
+                  aria-describedby="basic-addon1"
+                  onChange={e =>
+                    this.setState({ searchFieldValue: e.target.value })
+                  }
+                />
+              </div>
               {todoList}
               <TinyPagination
                 total={todos.length}

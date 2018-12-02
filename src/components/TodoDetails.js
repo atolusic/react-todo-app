@@ -7,6 +7,7 @@ import { Consumer, Context } from "../context/context";
 
 class TodoDetails extends Component {
   static contextType = Context;
+
   componentDidMount() {
     const {
       match: {
@@ -51,8 +52,8 @@ class TodoDetails extends Component {
           {value => {
             const { dispatch, todos } = value;
             let renderTodo = <Spinner />;
-            if (todos.length >= 1) {
-              const todo = todos.find(todo => todo.id === id);
+            const todo = todos.find(todo => todo.id === id);
+            if (todos.length >= 1 && todo) {
               renderTodo = (
                 <div
                   className="container text-left"
@@ -67,7 +68,21 @@ class TodoDetails extends Component {
                     <p className="lead">{todo.desc}</p>
                   </div>
                   <div>
-                    <button className="btn btn-secondary">Delete</button>
+                    <button
+                      onClick={() =>
+                        dispatch({
+                          type: "SHOW_MODAL",
+                          modalType: "DELETE_TODO_POPUP",
+                          deleteTodoDetails: {
+                            ids: [id],
+                            redirect: { fn: () => this.props.history.push("/") }
+                          }
+                        })
+                      }
+                      className="btn btn-secondary"
+                    >
+                      Delete
+                    </button>
                     <button
                       onClick={() =>
                         dispatch({

@@ -1,6 +1,6 @@
 import React from "react";
 
-const Thead = ({ dispatch, todos, deleteTodoIds, deleteTodoHandler }) => (
+const Thead = ({ dispatch, deleteTodoIds }) => (
   <thead>
     <tr className="table-active">
       <th scope="col">ID</th>
@@ -8,7 +8,15 @@ const Thead = ({ dispatch, todos, deleteTodoIds, deleteTodoHandler }) => (
       <th scope="col">Created at</th>
       <th scope="col">
         <button
-          onClick={e => deleteTodoHandler(e, todos, dispatch)}
+          onClick={e => {
+            dispatch({
+              type: "SHOW_MODAL",
+              modalType: "DELETE_TODO_POPUP",
+              deleteTodoDetails: {
+                ids: deleteTodoIds
+              }
+            });
+          }}
           disabled={deleteTodoIds.length < 1}
           className="btn btn-sm btn-outline-dark"
         >

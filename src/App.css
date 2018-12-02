@@ -27,3 +27,8 @@
   clear: both;
   display: table;
 }
+
+.dp {
+  height: 2.5rem;
+  width: 10rem;
+}

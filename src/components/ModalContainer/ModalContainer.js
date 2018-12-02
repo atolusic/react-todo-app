@@ -7,7 +7,7 @@ import DeletePopup from "../DeletePopup";
 const MODAL_COMPONENTS = {
   ADD_TODO: AddTodo,
   EDIT_TODO: AddTodo,
-  DELETE_POPUP: DeletePopup
+  DELETE_TODO_POPUP: DeletePopup
 };
 
 const ModalContainer = () => {
