@@ -3,6 +3,7 @@ import Spinner from "./Spinner";
 import { TinyPagination } from "react-pagination-custom";
 import Dropdown from "react-dropdown";
 import "react-dropdown/style.css";
+import moment from "moment";
 
 import database from "../firebase/firebase";
 import Todos from "./Todos";
@@ -16,7 +17,11 @@ class MainPage extends Component {
     deleteTodoIds: [],
     selectedPageId: 1,
     dropdownValue: "Task name",
-    searchFieldValue: ""
+    searchFieldValue: "",
+    sort: {
+      sortBy: null,
+      direction: null
+    }
   };
 
   componentDidMount() {
@@ -61,6 +66,33 @@ class MainPage extends Component {
     return todo[dpVal].toLowerCase().includes(searchFieldValue.toLowerCase())
       ? todo
       : null;
+  };
+
+  handleSort = (sortBy = "taskName") => {
+    const { sort } = this.state;
+    const o = {};
+    if (sortBy !== "taskName") {
+      o.sortBy = "date";
+      if (sort.direction === "desc" || sort.direction === null) {
+        o.direction = "asc";
+      } else {
+        o.direction = "desc";
+      }
+    } else {
+      o.sortBy = "taskName";
+      if (sort.direction === "desc" || sort.direction === null) {
+        o.direction = "asc";
+      } else {
+        o.direction = "desc";
+      }
+    }
+
+    this.setState(prevState => {
+      return {
+        ...prevState,
+        sort: o
+      };
+    });
   };
 
   /*********************** PAGINATION ***********************/
@@ -109,31 +141,49 @@ class MainPage extends Component {
       deleteTodoIds,
       selectedPageId,
       dropdownValue,
-      searchFieldValue
+      searchFieldValue,
+      sort
     } = this.state;
     const dropdownOptions = ["ID", "Task Name", "Description", "Created at"];
     return (
       <Consumer>
         {value => {
           const { todos, dispatch } = value;
-          let listShow = [...todos].filter(todo => {
-            if (searchFieldValue.length > 2) {
-              switch (dropdownValue) {
-                case "ID":
-                  return this.handleSearch(todo, "id");
-                case "Task name":
-                  return this.handleSearch(todo, "taskName");
-                case "Description":
-                  return this.handleSearch(todo, "desc");
-                case "Created at":
-                  return this.handleSearch(todo, "createdAt");
+          let listShow = [...todos]
+            .filter(todo => {
+              if (searchFieldValue.length > 2) {
+                switch (dropdownValue) {
+                  case "ID":
+                    return this.handleSearch(todo, "id");
+                  case "Task name":
+                    return this.handleSearch(todo, "taskName");
+                  case "Description":
+                    return this.handleSearch(todo, "desc");
+                  case "Created at":
+                    return this.handleSearch(todo, "createdAt");
 
-                default:
-                  return todo;
+                  default:
+                    return todo;
+                }
               }
-            }
-            return todo;
-          });
+              return todo;
+            })
+            .sort((a, b) => {
+              if (sort.sortBy === "taskName") {
+                let textA = a.taskName.toUpperCase();
+                let textB = b.taskName.toUpperCase();
+                if (sort.direction === "asc") {
+                  return textA < textB ? -1 : textA > textB ? 1 : 0;
+                } else {
+                  return textA > textB ? -1 : textA < textB ? 1 : 0;
+                }
+              } else if (sort.sortBy === "date") {
+                let dateA = moment(a.createdAt).valueOf();
+                let dateB = moment(b.createdAt).valueOf();
+                return sort.direction === "asc" ? dateA - dateB : dateB - dateA;
+              } else {
+              }
+            });
           listShow = listShow.splice(
             (selectedPageId - 1) * itemPerPage,
             itemPerPage
@@ -141,7 +191,11 @@ class MainPage extends Component {
           if (todos.length >= 1) {
             todoList = (
               <table className="table table-hover table-bordered">
-                <Thead dispatch={dispatch} deleteTodoIds={deleteTodoIds} />
+                <Thead
+                  dispatch={dispatch}
+                  deleteTodoIds={deleteTodoIds}
+                  handleSort={this.handleSort}
+                />
                 <Todos>
                   {listShow.map(todo => (
                     <Todo
@@ -158,7 +212,7 @@ class MainPage extends Component {
 
           return (
             <div className="container">
-              <h1 className="mb-5">React TodoApp</h1>
+              <h1 className="mb-3">React TodoApp</h1>
               <div className="input-group mb-3">
                 <div className="input-group-prepend">
                   <Dropdown

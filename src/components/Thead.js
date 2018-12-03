@@ -1,11 +1,20 @@
 import React from "react";
 
-const Thead = ({ dispatch, deleteTodoIds }) => (
+const Thead = ({ dispatch, deleteTodoIds, handleSort }) => (
   <thead>
     <tr className="table-active">
       <th scope="col">ID</th>
-      <th scope="col">Task name</th>
-      <th scope="col">Created at</th>
+      <th scope="col">
+        Task name
+        <i
+          className="fas fa-sort-down"
+          onClick={() => handleSort("taskName")}
+        />
+      </th>
+      <th scope="col">
+        Created at{" "}
+        <i className="fas fa-sort-down" onClick={() => handleSort("date")} />
+      </th>
       <th scope="col">
         <button
           onClick={e => {
@@ -17,7 +26,7 @@ const Thead = ({ dispatch, deleteTodoIds }) => (
               }
             });
           }}
-          disabled={deleteTodoIds.length < 1}
+          disabled={deleteTodoIds.length === 0}
           className="btn btn-sm btn-outline-dark"
         >
           <i className="fas fa-trash" />

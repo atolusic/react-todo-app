@@ -1,12 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import moment from "moment";
 
 const Todo = ({ todo, dispatch, checkDelete }) => {
   return (
     <tr className="table-active">
       <th scope="row">{todo.id}</th>
       <td>{todo.taskName}</td>
-      <td>{todo.createdAt}</td>
+      <td>{moment(todo.createdAt).format("MMMM Do YYYY, h:mma")}</td>
       <th>
         <input onChange={e => checkDelete(todo.id)} type="checkbox" />
       </th>

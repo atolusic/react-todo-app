@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import Modal from "react-responsive-modal";
 
 import { Consumer } from "../context/context";
-import moment from "moment";
 import database from "../firebase/firebase";
 
 class AddTodo extends Component {
@@ -18,7 +17,7 @@ class AddTodo extends Component {
     const saveData = {
       taskName: this.taskNameInput.current.value,
       desc: this.descriptionInput.current.value,
-      createdAt: moment().format("MMMM Do YYYY, h:mma")
+      createdAt: new Date().getTime()
     };
 
     if (isEdit) {
